@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public float speed = 2f;
+    Vector2 movement;
+    Rigidbody2D rb;
+
+    FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
     {
         left, right
@@ -12,7 +17,7 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
@@ -26,20 +31,48 @@ public class PlayerController : MonoBehaviour
 
     private void MovementUpdate(Vector2 playerInput)
     {
-
+        rb.AddForce(movement * speed);
+        movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
     }
 
     public bool IsWalking()
     {
-        return false;
+        if (movement.x > 0||movement.x < 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     public bool IsGrounded()
     {
-        return false;
+        LayerMask ground = LayerMask.GetMask("Ground");
+        bool hit = Physics2D.Linecast(transform.position, new Vector2(transform.position.x, transform.position.y - 1f), ground);
+        if (hit)
+        {
+            Debug.Log("grounded");
+            return true;
+        }
+        else
+        {
+            Debug.Log("not grounded");
+            return false;
+        }
     }
 
     public FacingDirection GetFacingDirection()
     {
-        return FacingDirection.left;
+        if (movement.x > 0)
+        {
+            direction = FacingDirection.right;
+        }
+        else if (movement.x < 0)
+        {
+            direction = FacingDirection.left;
+        }
+
+        return direction;
     }
 }
