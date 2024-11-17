@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //call rigidbody
         rb = GetComponent<Rigidbody2D>();
     }
 
@@ -31,12 +32,14 @@ public class PlayerController : MonoBehaviour
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        rb.AddForce(movement * speed);
+        //take the player's arrow key inputs and translate into movement
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        rb.AddForce(movement * speed);
     }
 
     public bool IsWalking()
     {
+        //if there's movement then set iswalking to true
         if (movement.x > 0||movement.x < 0)
         {
             return true;
@@ -48,6 +51,7 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsGrounded()
     {
+        //get reference to ground tilemap layer, then use in linecast to hit that specific collider
         LayerMask ground = LayerMask.GetMask("Ground");
         bool hit = Physics2D.Linecast(transform.position, new Vector2(transform.position.x, transform.position.y - 1f), ground);
         if (hit)
@@ -64,6 +68,7 @@ public class PlayerController : MonoBehaviour
 
     public FacingDirection GetFacingDirection()
     {
+        //change directions based on positive/negative force on x axis
         if (movement.x > 0)
         {
             direction = FacingDirection.right;
