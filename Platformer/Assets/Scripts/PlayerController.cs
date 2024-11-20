@@ -8,6 +8,17 @@ public class PlayerController : MonoBehaviour
     Vector2 movement;
     Rigidbody2D rb;
 
+    public float maxSpeed;
+    public float accelerationTime;
+    float acceleration;
+    float deceleration;
+    public float decelerationTime;
+
+    //jumping variables
+    public float apexHeight;
+    public float apexTime;
+    float jumpSpeed;
+
     FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
     {
@@ -19,6 +30,10 @@ public class PlayerController : MonoBehaviour
     {
         //call rigidbody
         rb = GetComponent<Rigidbody2D>();
+
+        //get acceleration
+        acceleration = maxSpeed / accelerationTime;
+        deceleration = maxSpeed / decelerationTime;
     }
 
     // Update is called once per frame
@@ -32,9 +47,27 @@ public class PlayerController : MonoBehaviour
 
     private void MovementUpdate(Vector2 playerInput)
     {
+        /*
         //take the player's arrow key inputs and translate into movement
-        movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        rb.AddForce(movement * speed);
+        movement = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
+        rb.AddForce(movement * speed);*/
+
+        Vector2 currVelocity = rb.velocity;
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            currVelocity += acceleration * Vector2.left * Time.deltaTime;
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            currVelocity += acceleration * Vector2.right * Time.deltaTime;
+        }
+        //add a jump mechanic
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
+        {
+            currVelocity += acceleration * Vector2.up * Time.deltaTime;
+        }
+
+        rb.velocity = currVelocity;
     }
 
     public bool IsWalking()
@@ -56,12 +89,10 @@ public class PlayerController : MonoBehaviour
         bool hit = Physics2D.Linecast(transform.position, new Vector2(transform.position.x, transform.position.y - 1f), ground);
         if (hit)
         {
-            Debug.Log("grounded");
             return true;
         }
         else
         {
-            Debug.Log("not grounded");
             return false;
         }
     }
