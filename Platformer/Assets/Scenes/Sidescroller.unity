@@ -1696,8 +1696,8 @@ MonoBehaviour:
   speed: 2
   maxSpeed: 20
   accelerationTime: 2
-  decelerationTime: 0
-  apexHeight: 5
+  decelerationTime: 1
+  apexHeight: 10
   apexTime: 2
 --- !u!4 &1433354315
 Transform:

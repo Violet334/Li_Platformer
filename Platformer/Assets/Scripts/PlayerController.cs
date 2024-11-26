@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
         //get acceleration
         acceleration = maxSpeed / accelerationTime;
         deceleration = maxSpeed / decelerationTime;
+        jumpSpeed = apexHeight / apexTime;
     }
 
     // Update is called once per frame
@@ -52,20 +53,31 @@ public class PlayerController : MonoBehaviour
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
         rb.AddForce(movement * speed);*/
 
+        //Updated movement
         Vector2 currVelocity = rb.velocity;
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             currVelocity += acceleration * Vector2.left * Time.deltaTime;
         }
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            currVelocity -= deceleration * Vector2.left * Time.deltaTime;
+        }
         if (Input.GetKey(KeyCode.RightArrow))
         {
             currVelocity += acceleration * Vector2.right * Time.deltaTime;
         }
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            currVelocity -= deceleration * Vector2.left * Time.deltaTime;
+        }
+
         //add a jump mechanic
         if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
-            currVelocity += acceleration * Vector2.up * Time.deltaTime;
+            currVelocity += Vector2.up * jumpSpeed;
         }
+        
 
         rb.velocity = currVelocity;
     }
