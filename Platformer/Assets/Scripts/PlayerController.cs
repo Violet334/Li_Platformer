@@ -90,9 +90,13 @@ public class PlayerController : MonoBehaviour
         rb.velocity = currVelocity;
 
         //terminal speed
-        if(currVelocity.y < -terminalSpeed)
+        if (!IsGrounded() && rb.gravityScale == 1)
         {
-            currVelocity.y = -terminalSpeed;
+            currVelocity += acceleration * Vector2.down * Time.deltaTime;
+        }
+        if(acceleration < -terminalSpeed)
+        {
+            acceleration = -terminalSpeed;
         }
     }
 
