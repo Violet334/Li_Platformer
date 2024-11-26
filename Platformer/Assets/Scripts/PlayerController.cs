@@ -19,6 +19,9 @@ public class PlayerController : MonoBehaviour
     public float apexTime;
     float jumpSpeed;
 
+    //terminal speed
+    public float terminalSpeed;
+
     FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
     {
@@ -67,7 +70,7 @@ public class PlayerController : MonoBehaviour
         {
             currVelocity += acceleration * Vector2.right * Time.deltaTime;
         }
-        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        if (Input.GetKeyUp(KeyCode.RightArrow))
         {
             currVelocity -= deceleration * Vector2.left * Time.deltaTime;
         }
@@ -75,11 +78,22 @@ public class PlayerController : MonoBehaviour
         //add a jump mechanic
         if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
+            rb.gravityScale = 0;
             currVelocity += Vector2.up * jumpSpeed;
+            if(currVelocity.y >= apexHeight)
+            {
+                rb.gravityScale = 1;
+            }
+            Debug.Log(currVelocity);
         }
-        
 
         rb.velocity = currVelocity;
+
+        //terminal speed
+        if(currVelocity.y < -terminalSpeed)
+        {
+            currVelocity.y = -terminalSpeed;
+        }
     }
 
     public bool IsWalking()
