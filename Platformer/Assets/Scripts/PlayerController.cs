@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -21,6 +22,10 @@ public class PlayerController : MonoBehaviour
 
     //terminal speed
     public float terminalSpeed;
+
+    //coyote time
+    float timer = 0;
+    public float coyoteTime;
 
     FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
@@ -75,28 +80,41 @@ public class PlayerController : MonoBehaviour
             currVelocity -= deceleration * Vector2.left * Time.deltaTime;
         }
 
+        //timer increments when player isn't touching the ground
+        if (!IsGrounded())
+        {
+            timer++;
+        }
         //add a jump mechanic
         if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
-            rb.gravityScale = 0;
             currVelocity += Vector2.up * jumpSpeed;
-            if(currVelocity.y >= apexHeight)
-            {
-                rb.gravityScale = 1;
-            }
-            Debug.Log(currVelocity);
+        } 
+        //add coyote time
+        else if (!IsGrounded() && timer < coyoteTime && Input.GetKeyDown(KeyCode.Space))
+        {
+            currVelocity += Vector2.up * jumpSpeed;
+        }
+        if (!IsGrounded() && currVelocity.y >= apexHeight)
+        {
+            currVelocity += Vector2.down * jumpSpeed;
+        }
+        //terminal speed
+        else if (!IsGrounded())
+        {
+            currVelocity += acceleration * Vector2.down * Time.deltaTime;
+        }
+        if (Vector3.Magnitude(rb.velocity) < -terminalSpeed)
+        {
+            acceleration = -terminalSpeed;
         }
 
         rb.velocity = currVelocity;
 
-        //terminal speed
-        if (!IsGrounded() && rb.gravityScale == 1)
+        //reset coyote timer when the player hits the ground
+        if (IsGrounded())
         {
-            currVelocity += acceleration * Vector2.down * Time.deltaTime;
-        }
-        if(acceleration < -terminalSpeed)
-        {
-            acceleration = -terminalSpeed;
+            timer = 0;
         }
     }
 
