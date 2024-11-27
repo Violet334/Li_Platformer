@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     float acceleration;
     float deceleration;
     public float decelerationTime;
+    bool isJumping;
 
     //jumping variables
     public float apexHeight;
@@ -27,11 +28,20 @@ public class PlayerController : MonoBehaviour
     float timer = 0;
     public float coyoteTime;
 
+    public int health = 10;
+
     FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
     {
         left, right
     }
+
+    public enum CharacterState
+    {
+        idle, walk, jump, die
+    }
+    public CharacterState currentChatacterState = CharacterState.idle;
+    public CharacterState prevCharacterState = CharacterState.idle;
 
     // Start is called before the first frame update
     void Start()
@@ -42,18 +52,93 @@ public class PlayerController : MonoBehaviour
         //get acceleration
         acceleration = maxSpeed / accelerationTime;
         deceleration = maxSpeed / decelerationTime;
-        jumpSpeed = apexHeight / apexTime;
+        //jumpSpeed = apexHeight / apexTime;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if(prevCharacterState != currentChatacterState)
+        {
+
+        }
         //The input from the player needs to be determined and then passed in the to the MovementUpdate which should
         //manage the actual movement of the character.
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            isJumping = true;
+        }
+
+        switch (currentChatacterState)
+        {
+            case CharacterState.die:
+
+                break;
+
+            case CharacterState.walk:
+                if (!IsWalking())
+                {
+                    currentChatacterState = CharacterState.idle;
+                }
+                if (!IsGrounded())
+                {
+                    currentChatacterState = CharacterState.jump;
+                }
+                break;
+            case CharacterState.idle:
+                if (IsWalking())
+                {
+                    currentChatacterState = CharacterState.walk;
+                }
+                if (!IsGrounded())
+                {
+                    Debug.Log("Jump switch triggered");
+                    currentChatacterState = CharacterState.jump;
+                }
+                break;
+
+            case CharacterState.jump:
+                Debug.Log("Are we grounded["+IsGrounded().ToString()+"]");
+                if (IsGrounded())
+                {
+                    if (IsWalking())
+                    {
+                        currentChatacterState = CharacterState.walk;
+                    }
+                    else
+                    {
+                        currentChatacterState = CharacterState.idle;
+                    }
+                }
+                break;
+        }
+
+        if (IsDead())
+        {
+            currentChatacterState = CharacterState.die;
+        }
+    }
+    private void FixedUpdate()
+    {
         Vector2 playerInput = new Vector2();
+
+        //set player input
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            playerInput += Vector2.left;
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            playerInput += Vector2.right;
+        }
+        if (isJumping)
+        {
+            playerInput += Vector2.up;
+            isJumping = false;
+        }
+
         MovementUpdate(playerInput);
     }
-
     private void MovementUpdate(Vector2 playerInput)
     {
         /*
@@ -61,7 +146,7 @@ public class PlayerController : MonoBehaviour
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
         rb.AddForce(movement * speed);*/
 
-        //Updated movement
+        /*//Updated movement
         Vector2 currVelocity = rb.velocity;
         if (Input.GetKey(KeyCode.LeftArrow))
         {
@@ -78,6 +163,17 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.RightArrow))
         {
             currVelocity -= deceleration * Vector2.left * Time.deltaTime;
+        }*/
+
+        //new actually good movement
+        Vector2 currVelocity = rb.velocity;
+        if (playerInput.x != 0)
+        {
+            currVelocity += acceleration * playerInput * Time.deltaTime;
+        }
+        else
+        {
+            currVelocity = new Vector2(0, currVelocity.y);
         }
 
         //timer increments when player isn't touching the ground
@@ -85,11 +181,11 @@ public class PlayerController : MonoBehaviour
         {
             timer++;
         }
-        //add a jump mechanic
+        /*//add a jump mechanic
         if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
             currVelocity += Vector2.up * jumpSpeed;
-        } 
+        } */
         //add coyote time
         else if (!IsGrounded() && timer < coyoteTime && Input.GetKeyDown(KeyCode.Space))
         {
@@ -121,7 +217,7 @@ public class PlayerController : MonoBehaviour
     public bool IsWalking()
     {
         //if there's movement then set iswalking to true
-        if (movement.x > 0||movement.x < 0)
+        if (rb.velocity.x != 0)
         {
             return true;
         }
@@ -145,18 +241,23 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public bool IsDead()
+    {
+        return health <= 0;
+    }
     public FacingDirection GetFacingDirection()
     {
         //change directions based on positive/negative force on x axis
-        if (movement.x > 0)
+        if (rb.velocity.x > 0)
         {
             direction = FacingDirection.right;
         }
-        else if (movement.x < 0)
+        else if (rb.velocity.x < 0)
         {
             direction = FacingDirection.left;
         }
 
         return direction;
     }
+
 }
