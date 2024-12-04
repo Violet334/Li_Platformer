@@ -33,9 +33,9 @@ public class PlayerVisuals : MonoBehaviour
     {
         /*animator.SetBool(isWalkingHash, playerController.IsWalking());
         animator.SetBool(isGroundedHash, playerController.IsGrounded());*/
-        if (playerController.prevCharacterState != playerController.currentChatacterState)
+        if (playerController.prevCharacterState != playerController.currentCharacterState)
         {
-            switch (playerController.currentChatacterState)
+            switch (playerController.currentCharacterState)
             {
                 case PlayerController.CharacterState.idle:
                     animator.CrossFade("Idle", 0f);

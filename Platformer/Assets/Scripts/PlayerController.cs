@@ -6,13 +6,13 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float speed = 2f;
-    Vector2 movement;
+    //Vector2 movement;
     Rigidbody2D rb;
 
     public float maxSpeed;
     public float accelerationTime;
     float acceleration;
-    float deceleration;
+    //float deceleration;
     public float decelerationTime;
     bool isJumping;
 
@@ -30,6 +30,11 @@ public class PlayerController : MonoBehaviour
 
     public int health = 10;
 
+    //add a dash bool
+    bool isDash = false;
+    //add a speed boosting variable for a player dash
+    public float speedBoost = 3;
+
     FacingDirection direction = FacingDirection.left;
     public enum FacingDirection
     {
@@ -40,7 +45,7 @@ public class PlayerController : MonoBehaviour
     {
         idle, walk, jump, die
     }
-    public CharacterState currentChatacterState = CharacterState.idle;
+    public CharacterState currentCharacterState = CharacterState.idle;
     public CharacterState prevCharacterState = CharacterState.idle;
 
     // Start is called before the first frame update
@@ -51,25 +56,40 @@ public class PlayerController : MonoBehaviour
 
         //get acceleration
         acceleration = maxSpeed / accelerationTime;
-        deceleration = maxSpeed / decelerationTime;
-        //jumpSpeed = apexHeight / apexTime;
+        //deceleration = maxSpeed / decelerationTime;
+        jumpSpeed = apexHeight / apexTime;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(prevCharacterState != currentChatacterState)
-        {
+        prevCharacterState = currentCharacterState;
 
-        }
         //The input from the player needs to be determined and then passed in the to the MovementUpdate which should
         //manage the actual movement of the character.
+        
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
         }
+        //add a wall jumping mechanic
+        //enable jump if the player hits the side of a wall
+        if (HitWall() && Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            isJumping = true;
+        }
 
-        switch (currentChatacterState)
+        //add a gliding mechanic
+        if (!IsGrounded() && Input.GetKey(KeyCode.UpArrow))
+        {
+            rb.gravityScale = 0.5f;
+        }
+        else
+        {
+            rb.gravityScale = 1;
+        }
+
+        switch (currentCharacterState)
         {
             case CharacterState.die:
 
@@ -78,46 +98,44 @@ public class PlayerController : MonoBehaviour
             case CharacterState.walk:
                 if (!IsWalking())
                 {
-                    currentChatacterState = CharacterState.idle;
+                    currentCharacterState = CharacterState.idle;
                 }
                 if (!IsGrounded())
                 {
-                    currentChatacterState = CharacterState.jump;
+                    currentCharacterState = CharacterState.jump;
                 }
                 break;
             case CharacterState.idle:
                 if (IsWalking())
                 {
-                    currentChatacterState = CharacterState.walk;
+                    currentCharacterState = CharacterState.walk;
                 }
                 if (!IsGrounded())
                 {
-                    Debug.Log("Jump switch triggered");
-                    currentChatacterState = CharacterState.jump;
+                    currentCharacterState = CharacterState.jump;
                 }
                 break;
 
             case CharacterState.jump:
-                Debug.Log("Are we grounded["+IsGrounded().ToString()+"]");
                 if (IsGrounded())
                 {
                     if (IsWalking())
                     {
-                        currentChatacterState = CharacterState.walk;
+                        currentCharacterState = CharacterState.walk;
                     }
                     else
                     {
-                        currentChatacterState = CharacterState.idle;
+                        currentCharacterState = CharacterState.idle;
                     }
                 }
                 break;
         }
-
         if (IsDead())
         {
-            currentChatacterState = CharacterState.die;
+            currentCharacterState = CharacterState.die;
         }
     }
+
     private void FixedUpdate()
     {
         Vector2 playerInput = new Vector2();
@@ -131,6 +149,10 @@ public class PlayerController : MonoBehaviour
         {
             playerInput += Vector2.right;
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            isDash = true;
+        }
         if (isJumping)
         {
             playerInput += Vector2.up;
@@ -139,53 +161,44 @@ public class PlayerController : MonoBehaviour
 
         MovementUpdate(playerInput);
     }
+
     private void MovementUpdate(Vector2 playerInput)
     {
-        /*
-        //take the player's arrow key inputs and translate into movement
-        movement = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
-        rb.AddForce(movement * speed);*/
-
-        /*//Updated movement
-        Vector2 currVelocity = rb.velocity;
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            currVelocity += acceleration * Vector2.left * Time.deltaTime;
-        }
-        if (Input.GetKeyUp(KeyCode.LeftArrow))
-        {
-            currVelocity -= deceleration * Vector2.left * Time.deltaTime;
-        }
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            currVelocity += acceleration * Vector2.right * Time.deltaTime;
-        }
-        if (Input.GetKeyUp(KeyCode.RightArrow))
-        {
-            currVelocity -= deceleration * Vector2.left * Time.deltaTime;
-        }*/
-
         //new actually good movement
         Vector2 currVelocity = rb.velocity;
         if (playerInput.x != 0)
         {
             currVelocity += acceleration * playerInput * Time.deltaTime;
+            if (isDash)
+            {
+                rb.AddForce(new Vector2(speedBoost, 0), ForceMode2D.Impulse);
+                isDash = false;
+            }
         }
         else
         {
             currVelocity = new Vector2(0, currVelocity.y);
         }
 
-        //timer increments when player isn't touching the ground
+        //jumping code
+        if (playerInput.y > 0)
+        {
+            currVelocity += jumpSpeed * playerInput;
+        }
+
+        /*if ()
+        {
+            rb.AddForce(new Vector2(0, jumpSpeed), ForceMode2D.Impulse);
+        }*/
+
+        rb.velocity = currVelocity;
+
+        /*//timer increments when player isn't touching the ground
         if (!IsGrounded())
         {
             timer++;
         }
-        /*//add a jump mechanic
-        if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
-        {
-            currVelocity += Vector2.up * jumpSpeed;
-        } */
+        
         //add coyote time
         else if (!IsGrounded() && timer < coyoteTime && Input.GetKeyDown(KeyCode.Space))
         {
@@ -211,7 +224,7 @@ public class PlayerController : MonoBehaviour
         if (IsGrounded())
         {
             timer = 0;
-        }
+        }*/
     }
 
     public bool IsWalking()
@@ -231,7 +244,25 @@ public class PlayerController : MonoBehaviour
         //get reference to ground tilemap layer, then use in linecast to hit that specific collider
         LayerMask ground = LayerMask.GetMask("Ground");
         bool hit = Physics2D.Linecast(transform.position, new Vector2(transform.position.x, transform.position.y - 1f), ground);
+        
         if (hit)
+        {
+            return true;
+        }
+        
+        else
+        {
+            return false;
+        }
+    }
+
+    //create bool to determine if the player has hit a wall
+    public bool HitWall()
+    {
+        LayerMask ground = LayerMask.GetMask("Ground");
+        bool hitRight = Physics2D.Linecast(transform.position, transform.position + Vector3.right, ground);
+        bool hitLeft = Physics2D.Linecast(transform.position, transform.position + Vector3.left, ground);
+        if (hitRight||hitLeft)
         {
             return true;
         }
@@ -240,7 +271,6 @@ public class PlayerController : MonoBehaviour
             return false;
         }
     }
-
     public bool IsDead()
     {
         return health <= 0;
@@ -261,3 +291,28 @@ public class PlayerController : MonoBehaviour
     }
 
 }
+
+
+/*
+        //take the player's arrow key inputs and translate into movement
+        movement = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
+        rb.AddForce(movement * speed);*/
+
+/*//Updated movement
+Vector2 currVelocity = rb.velocity;
+if (Input.GetKey(KeyCode.LeftArrow))
+{
+    currVelocity += acceleration * Vector2.left * Time.deltaTime;
+}
+if (Input.GetKeyUp(KeyCode.LeftArrow))
+{
+    currVelocity -= deceleration * Vector2.left * Time.deltaTime;
+}
+if (Input.GetKey(KeyCode.RightArrow))
+{
+    currVelocity += acceleration * Vector2.right * Time.deltaTime;
+}
+if (Input.GetKeyUp(KeyCode.RightArrow))
+{
+    currVelocity -= deceleration * Vector2.left * Time.deltaTime;
+}*/
